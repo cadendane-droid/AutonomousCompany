@@ -1,0 +1,34 @@
+---
+// Required on every monetized page. The Policy Engine's disclosure check
+// blocks any PR that adds affiliate links to a page without this component
+// (plan §5.3), so removing it from a template is not a thing an agent can do.
+//
+// This is a protected path in policy/rules.yml — edits need human approval.
+// Wording is a legal/trust commitment (spec §13), not copy to optimize.
+---
+
+<aside class="affiliate-disclosure" role="note" aria-label="Affiliate disclosure">
+  <p>
+    <strong>Disclosure:</strong> This page contains affiliate links. If you buy
+    through one of them we may earn a commission, at no extra cost to you. This
+    never affects which products we recommend or how we rank them — our
+    recommendations are based on the research and testing described on this
+    page. Content on this site is produced with AI assistance and reviewed
+    before publication.
+  </p>
+</aside>
+
+<style>
+  .affiliate-disclosure {
+    border-left: 3px solid currentColor;
+    padding: 0.75rem 1rem;
+    margin: 1.5rem 0;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    opacity: 0.85;
+  }
+
+  .affiliate-disclosure p {
+    margin: 0;
+  }
+</style>

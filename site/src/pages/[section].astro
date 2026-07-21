@@ -1,0 +1,41 @@
+---
+// Section listings: /guides, /reviews, /comparisons. One dynamic route rather
+// than three near-identical files. Named params rank above the [...slug] rest
+// route, so these win the match.
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SECTIONS } from '../lib/sections.ts';
+
+export async function getStaticPaths() {
+  const { SECTIONS: sections } = await import('../lib/sections.ts');
+  return Object.keys(sections).map((section) => ({ params: { section } }));
+}
+
+const { section } = Astro.params;
+const config = SECTIONS[section!]!;
+
+const entries = (await getCollection('tenant-alpha')).filter(
+  (entry) => entry.data.type === config.type,
+);
+const canonical = new URL(`/${section}`, Astro.site).toString();
+---
+
+<BaseLayout title={config.label} description={config.blurb} canonical={canonical}>
+  <h1>{config.label}</h1>
+  <p>{config.blurb}</p>
+
+  {
+    entries.length === 0 ? (
+      <p>Nothing published in this section yet.</p>
+    ) : (
+      <ul>
+        {entries.map((entry) => (
+          <li>
+            <a href={`/${entry.slug}`}>{entry.data.title}</a>
+            {entry.data.description && <> — {entry.data.description}</>}
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</BaseLayout>

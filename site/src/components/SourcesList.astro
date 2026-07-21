@@ -1,0 +1,50 @@
+---
+// Renders the Sources section from frontmatter. The Policy Engine requires a
+// sources section on content pages (rules.yml content.require_sources_section),
+// and the Builder agent's fact-check pass maps every factual claim to one of
+// these URLs before a PR is opened (plan §6.3).
+//
+// This is the visible half of the trust promise in spec §13. If it is empty on
+// a page making factual claims, something upstream failed.
+interface Source {
+  title: string;
+  url: string;
+}
+
+interface Props {
+  sources?: Source[];
+}
+
+const { sources = [] } = Astro.props;
+---
+
+{
+  sources.length > 0 && (
+    <section class="sources" aria-labelledby="sources-heading">
+      <h2 id="sources-heading">Sources</h2>
+      <ol>
+        {sources.map((source) => (
+          <li>
+            <a href={source.url} rel="noopener nofollow" target="_blank">
+              {source.title}
+            </a>
+          </li>
+        ))}
+      </ol>
+    </section>
+  )
+}
+
+<style>
+  .sources {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid currentColor;
+  }
+
+  .sources ol {
+    padding-left: 1.25rem;
+    font-size: 0.9375rem;
+    line-height: 1.7;
+  }
+</style>

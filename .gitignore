@@ -22,3 +22,5 @@ coverage/
 # editor
 .idea/
 .vscode/
+site/src/env.d.ts
+site/.astro/

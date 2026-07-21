@@ -1,0 +1,97 @@
+---
+// Article layout — used by guides and reviews. The comparison layout extends
+// this one rather than duplicating the head, schema, and disclosure wiring.
+
+import BaseLayout from './BaseLayout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import AffiliateDisclosure from '../components/AffiliateDisclosure.astro';
+import SourcesList from '../components/SourcesList.astro';
+import { pageSchemas, type EntryFrontmatter, type ProductRef } from '../lib/schema.ts';
+import { sectionLabelFor, sectionPathFor } from '../lib/sections.ts';
+
+interface Props {
+  frontmatter: EntryFrontmatter;
+  /** Absolute canonical URL for this page. */
+  canonical: string;
+  /** Products referenced, for ItemList/Product schema on reviews. */
+  products?: ProductRef[];
+}
+
+const { frontmatter: fm, canonical, products = [] } = Astro.props;
+
+// TODO(setup): replace with the real brand name (see OPEN-QUESTIONS.md §1).
+const PUBLISHER = 'PLACEHOLDER_NICHE Guide';
+const site = Astro.site?.toString().replace(/\/$/, '') ?? '';
+
+const schemas = pageSchemas(fm, { site, canonical, publisher: PUBLISHER }, products);
+
+const crumbs = [
+  { label: 'Home', href: '/' },
+  { label: sectionLabelFor(fm.type), href: sectionPathFor(fm.type) },
+  { label: fm.title, href: new URL(canonical).pathname },
+];
+
+const published = fm.published instanceof Date ? fm.published : new Date(fm.published);
+const updated = fm.updated instanceof Date ? fm.updated : new Date(fm.updated);
+const showUpdated = updated.getTime() > published.getTime();
+---
+
+<BaseLayout
+  title={fm.title}
+  description={fm.description}
+  canonical={canonical}
+  schemas={schemas}
+>
+  <article>
+    <Breadcrumbs crumbs={crumbs} />
+
+    <h1>{fm.title}</h1>
+
+    <p class="meta">
+      <time datetime={published.toISOString().slice(0, 10)}>
+        Published {published.toISOString().slice(0, 10)}
+      </time>
+      {
+        showUpdated && (
+          <>
+            {' · '}
+            <time datetime={updated.toISOString().slice(0, 10)}>
+              Updated {updated.toISOString().slice(0, 10)}
+            </time>
+          </>
+        )
+      }
+    </p>
+
+    {/* Disclosure sits above the first affiliate link, not buried in the
+        footer — the Policy Engine enforces its presence, and burying it would
+        satisfy the check while defeating its purpose (spec §13). */}
+    {fm.monetized && <AffiliateDisclosure />}
+
+    <slot />
+
+    {
+      fm.faq && fm.faq.length > 0 && (
+        <section class="faq" aria-labelledby="faq-heading">
+          <h2 id="faq-heading">Frequently asked questions</h2>
+          {fm.faq.map((entry) => (
+            <>
+              <h3>{entry.question}</h3>
+              <p>{entry.answer}</p>
+            </>
+          ))}
+        </section>
+      )
+    }
+
+    <SourcesList sources={fm.sources} />
+  </article>
+</BaseLayout>
+
+<style>
+  .meta {
+    font-size: 0.875rem;
+    opacity: 0.75;
+    margin-top: -0.5rem;
+  }
+</style>

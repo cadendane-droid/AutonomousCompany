@@ -1,0 +1,30 @@
+---
+// Renders every content entry for the tenant collection. One route because
+// the type lives in frontmatter, not in the URL structure — which keeps the
+// content directory layout and the URL layout independently changeable.
+import { getCollection, type CollectionEntry } from 'astro:content';
+import ArticleLayout from '../layouts/ArticleLayout.astro';
+import ComparisonLayout from '../layouts/ComparisonLayout.astro';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('tenant-alpha');
+  return entries.map((entry) => ({
+    params: { slug: entry.slug },
+    props: { entry },
+  }));
+}
+
+interface Props {
+  entry: CollectionEntry<'tenant-alpha'>;
+}
+
+const { entry } = Astro.props;
+const { Content } = await entry.render();
+
+const canonical = new URL(`/${entry.slug}`, Astro.site).toString();
+const Layout = entry.data.type === 'comparison' ? ComparisonLayout : ArticleLayout;
+---
+
+<Layout frontmatter={entry.data} canonical={canonical}>
+  <Content />
+</Layout>

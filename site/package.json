@@ -1,0 +1,23 @@
+{
+  "name": "@atlas/site",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "typecheck": "astro check --minimumFailingSeverity error",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@atlas/core": "workspace:*",
+    "astro": "^4.16.18",
+    "@astrojs/sitemap": "3.2.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.4",
+    "typescript": "^5.5.4"
+  }
+}

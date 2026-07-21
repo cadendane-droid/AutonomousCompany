@@ -1,0 +1,42 @@
+---
+// Comparison layout. Extends ArticleLayout rather than duplicating it — the
+// only difference is a lead-in slot above the body for the at-a-glance table.
+//
+// Note: this renders a table the CONTENT provides. It is not the reusable
+// comparison-table component with configurable columns — that is Rung 1–2 work
+// and explicitly out of scope (plan §3.2).
+
+import ArticleLayout from './ArticleLayout.astro';
+import type { EntryFrontmatter, ProductRef } from '../lib/schema.ts';
+
+interface Props {
+  frontmatter: EntryFrontmatter;
+  canonical: string;
+  products?: ProductRef[];
+}
+
+const { frontmatter, canonical, products = [] } = Astro.props;
+---
+
+<ArticleLayout frontmatter={frontmatter} canonical={canonical} products={products}>
+  <div class="comparison-body">
+    <slot />
+  </div>
+</ArticleLayout>
+
+<style>
+  /* Wide tables scroll inside their own container rather than making the page
+     scroll horizontally on mobile — a common CLS and usability failure. */
+  .comparison-body :global(table) {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  @media (min-width: 48rem) {
+    .comparison-body :global(table) {
+      display: table;
+      white-space: normal;
+    }
+  }
+</style>

@@ -1,0 +1,63 @@
+---
+// Visible breadcrumbs plus the BreadcrumbList JSON-LD they describe. Emitting
+// both from one component keeps the markup and the structured data from
+// drifting apart, which is the usual way breadcrumb schema goes invalid.
+interface Crumb {
+  label: string;
+  href: string;
+}
+
+interface Props {
+  crumbs: Crumb[];
+}
+
+const { crumbs } = Astro.props;
+const site = Astro.site?.toString().replace(/\/$/, '') ?? '';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: crumbs.map((crumb, index) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    name: crumb.label,
+    item: `${site}${crumb.href}`,
+  })),
+};
+---
+
+<nav aria-label="Breadcrumb" class="breadcrumbs">
+  <ol>
+    {
+      crumbs.map((crumb, index) => (
+        <li>
+          {index === crumbs.length - 1 ? (
+            <span aria-current="page">{crumb.label}</span>
+          ) : (
+            <a href={crumb.href}>{crumb.label}</a>
+          )}
+        </li>
+      ))
+    }
+  </ol>
+</nav>
+
+<script type="application/ld+json" set:html={JSON.stringify(jsonLd)} is:inline />
+
+<style>
+  .breadcrumbs ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1rem;
+    font-size: 0.875rem;
+  }
+
+  .breadcrumbs li + li::before {
+    content: '/';
+    margin-right: 0.5rem;
+    opacity: 0.5;
+  }
+</style>

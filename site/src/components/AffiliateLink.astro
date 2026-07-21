@@ -1,0 +1,43 @@
+---
+// Every affiliate link carries a sub-ID encoding the page slug (plan §3.2).
+// Without per-page attribution, affiliate revenue can never be tied to a page,
+// and the health score's revenue component is fiction (plan §2.1).
+//
+// TODO(setup): each affiliate program encodes its sub-ID under a different
+// query parameter. Once a program is chosen, add it to SUBID_PARAM below.
+// See OPEN-QUESTIONS.md §1.
+interface Props {
+  /** Destination URL, including any program tracking the merchant requires. */
+  href: string;
+  /** Page slug this click is attributed to. Passed by the layout. */
+  pageSlug: string;
+  /** Affiliate program key. Defaults to the placeholder program. */
+  program?: string;
+  /** Optional position label, e.g. "hero" or "table-row-3". */
+  placement?: string;
+}
+
+const { href, pageSlug, program = 'PLACEHOLDER_PROGRAM', placement } = Astro.props;
+
+/** Sub-ID query parameter, per program. */
+const SUBID_PARAM: Record<string, string> = {
+  // TODO(setup): real programs go here, e.g. amazon: 'ascsubtag'.
+  PLACEHOLDER_PROGRAM: 'subid',
+};
+
+const param = SUBID_PARAM[program] ?? 'subid';
+const subId = placement ? `${pageSlug}__${placement}` : pageSlug;
+
+const url = new URL(href);
+url.searchParams.set(param, subId);
+---
+
+<a
+  href={url.toString()}
+  rel="sponsored nofollow noopener"
+  target="_blank"
+  data-affiliate-program={program}
+  data-affiliate-subid={subId}
+>
+  <slot />
+</a>

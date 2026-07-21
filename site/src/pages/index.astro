@@ -1,0 +1,51 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { PLACEHOLDER_NICHE } from '@atlas/core';
+
+const entries = await getCollection('tenant-alpha');
+const byRecency = entries.sort(
+  (a, b) => new Date(b.data.published).getTime() - new Date(a.data.published).getTime(),
+);
+
+// TODO(setup): replace the site name, tagline, and intro once the niche is
+// chosen. This is the page a first-time visitor judges the site on.
+// See OPEN-QUESTIONS.md §1.
+const canonical = new URL('/', Astro.site).toString();
+---
+
+<BaseLayout
+  title={`${PLACEHOLDER_NICHE} Guide — independent buying guides and reviews`}
+  description={`Independent, sourced buying guides, reviews, and comparisons for ${PLACEHOLDER_NICHE}.`}
+  canonical={canonical}
+>
+  <h1>{PLACEHOLDER_NICHE} Guide</h1>
+
+  <p>
+    Independent buying guides, reviews, and comparisons. Every factual claim on
+    this site is traceable to a named source, listed at the bottom of each page.
+  </p>
+
+  <nav aria-label="Sections">
+    <ul>
+      <li><a href="/guides">Buying guides</a></li>
+      <li><a href="/reviews">Reviews</a></li>
+      <li><a href="/comparisons">Comparisons</a></li>
+    </ul>
+  </nav>
+
+  <h2>Latest</h2>
+  {
+    byRecency.length === 0 ? (
+      <p>No articles published yet.</p>
+    ) : (
+      <ul>
+        {byRecency.map((entry) => (
+          <li>
+            <a href={`/${entry.slug}`}>{entry.data.title}</a>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</BaseLayout>
