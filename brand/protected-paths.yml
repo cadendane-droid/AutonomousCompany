@@ -1,0 +1,21 @@
+# Paths requiring human approval on ANY change (Policy Engine: protected-paths).
+# Glob syntax: * matches within a segment, ** matches across segments.
+# Referenced by policy/rules.yml `protected.paths` — that file is the enforced
+# copy; this one documents intent per entry.
+#
+# TODO(setup): add proven-earner pages here as they emerge. A page that
+# reliably produces revenue gets protected BEFORE anyone optimizes it.
+
+paths:
+  # Tenant home/index pages — the front door
+  - site/src/content/*/index.md
+  # Site navigation — Law 5, rate-limited and human-gated
+  - site/src/components/Nav.*
+  # Trust surface: the disclosure component itself
+  - site/src/components/AffiliateDisclosure.*
+  # Brand rules are constraints, not suggestions
+  - brand/**
+  # The Policy Engine's own configuration — no agent edits its own gate
+  - policy/**
+  # CI definitions — same reasoning
+  - .github/**

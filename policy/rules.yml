@@ -1,0 +1,53 @@
+# Policy Engine rules — implementation plan §5.2, transcribed in full.
+# Threshold changes require a commit to this file so they are visible in the
+# diff and reviewable later (plan §13: "you relax a threshold 'just this
+# once'"). There is NO override mechanism an agent can invoke; human approval
+# is expressed only through GitHub's own review mechanism.
+
+blast_radius:
+  max_files_changed: 5
+  max_lines_changed: 800
+  max_new_pages_per_week: 8
+  max_deletions_per_pr: 1
+
+protected:
+  paths:
+    - site/content/*/index.md
+    # The Astro layout puts content under site/src/content — both spellings
+    # are protected so a restructure can't silently unprotect anything.
+    - site/src/content/*/index.md
+    - site/components/Nav.*
+    - site/src/components/Nav.*
+    - site/components/AffiliateDisclosure.*
+    - site/src/components/AffiliateDisclosure.*
+    - brand/**
+    - policy/**
+    - .github/**
+  requires: human_approval
+
+brand:
+  navigation_changes_per_quarter: 1
+  voice_rules_file: brand/rules.md
+  required_components:
+    monetized_pages: [AffiliateDisclosure]
+
+experiments:
+  max_concurrent_by_rung: { 0: 0, 1: 1, 2: 3, 3: 10 }
+  require_power_check: true
+  min_power: 0.8
+  require_guardrails: true
+  min_duration_days_by_type:
+    conversion: 14
+    ctr: 42
+    ranking: 56
+
+freeze:
+  on_algorithm_update: true
+  on_traffic_anomaly_sigma: 3
+  on_revenue_drop_pct: 20
+  manual_override: human_only
+
+content:
+  min_quality_score: 3.5
+  require_frontmatter_fields: [title, type, cluster, tenant]
+  require_sources_section: true
