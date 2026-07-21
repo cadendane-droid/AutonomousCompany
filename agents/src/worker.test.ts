@@ -4,6 +4,7 @@
 // backoff instead of losing the job.
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Job, Tenant } from '@atlas/core';
+import type * as RolesModule from './roles/index.js';
 
 const tenant: Tenant = {
   id: '11111111-1111-1111-1111-111111111111',
@@ -50,7 +51,7 @@ vi.mock('@atlas/db', () => mocks);
 
 const handler = vi.fn();
 vi.mock('./roles/index.js', async () => {
-  const actual = await vi.importActual<typeof import('./roles/index.js')>('./roles/index.js');
+  const actual = await vi.importActual<typeof RolesModule>('./roles/index.js');
   return {
     ...actual,
     ROLE_HANDLERS: {
