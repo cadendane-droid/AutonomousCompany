@@ -12,6 +12,7 @@ import { concurrency } from './checks/concurrency.js';
 import { powerCheck } from './checks/power-check.js';
 import { rollbackDeclared } from './checks/rollback-declared.js';
 import { qualityThreshold } from './checks/quality-threshold.js';
+import { lighthouse } from './checks/lighthouse.js';
 
 export const ALL_CHECKS: PolicyCheck[] = [
   freezeState,
@@ -24,6 +25,7 @@ export const ALL_CHECKS: PolicyCheck[] = [
   schemaMarkup,
   concurrency,
   powerCheck,
+  lighthouse,
   qualityThreshold,
 ];
 

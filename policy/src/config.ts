@@ -46,6 +46,19 @@ export const PolicyRulesSchema = z.object({
     require_frontmatter_fields: z.array(z.string()),
     require_sources_section: z.boolean(),
   }),
+  technical: z.object({
+    /**
+     * When true, a PR touching site/ must carry a preview Lighthouse score or
+     * the check fails closed. Off until Vercel preview + LHCI are wired, since
+     * there is no preview environment to measure against yet. Flipping it is a
+     * commit to this file, which is a protected path — no agent can reach it.
+     */
+    require_lighthouse: z.boolean(),
+    /** Plan §5.3: regression greater than this many points blocks. */
+    max_lighthouse_regression: z.number().min(0),
+    /** Plan §3.2: Lighthouse 95+ on mobile before the first article ships. */
+    min_lighthouse: z.number().min(0).max(100),
+  }),
 });
 export type PolicyRules = z.infer<typeof PolicyRulesSchema>;
 

@@ -39,6 +39,21 @@ export const PolicyStateSchema = z.object({
   human_approved: z.boolean(),
   /** Trailing 28-day sessions, for power-check traffic sanity. */
   monthly_sessions: z.number().min(0).optional(),
+  /**
+   * Lighthouse performance scores, supplied by the CI workflow after it runs
+   * LHCI against the Vercel preview deploy. Null when no preview was measured.
+   * Like every other field here, it comes from the workflow and not from the
+   * PR — a PR cannot report its own score.
+   */
+  lighthouse: z
+    .object({
+      /** Score on the base branch, for regression comparison. */
+      baseline: z.number().min(0).max(100).nullable(),
+      /** Score on this PR's preview deploy. */
+      preview: z.number().min(0).max(100),
+    })
+    .nullable()
+    .optional(),
 });
 export type PolicyState = z.infer<typeof PolicyStateSchema>;
 
