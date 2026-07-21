@@ -1,0 +1,118 @@
+name: Policy Check
+
+# The Policy Engine as a CI check, not a service (plan §5.1). An LLM cannot
+# negotiate with a failing CI check — that property is the entire point.
+#
+# There is deliberately NO way for the pull request to skip this job: no
+# commit-message override, no skip label, no path filter. Human approval is
+# expressed only through GitHub's own review mechanism, which the state builder
+# reads from the reviews API. Make this a required status check in branch
+# protection or none of the above is enforced (SETUP.md step 9).
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+  pull_request_review:
+    types: [submitted, dismissed]
+
+concurrency:
+  group: policy-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  policy:
+    name: Evaluate proposal against policy/rules.yml
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The PR head, with enough history to diff against the base.
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Extract the diff
+        run: |
+          git fetch --no-tags origin ${{ github.event.pull_request.base.sha }}
+          git diff --unified=0 \
+            ${{ github.event.pull_request.base.sha }} \
+            ${{ github.event.pull_request.head.sha }} > /tmp/pr.diff
+
+      - name: Extract the proposal body
+        env:
+          # Via env, never inline, so a PR body cannot inject shell.
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: printf '%s' "$PR_BODY" > /tmp/proposal.md
+
+      - name: Build policy state
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GITHUB_REPO: ${{ github.repository }}
+          # An approval of an earlier commit does not approve later pushes.
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: pnpm tsx scripts/policy-state.ts > /tmp/state.json
+
+      - name: Run the Policy Engine
+        id: policy
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          set +e
+          pnpm policy:check \
+            --diff /tmp/pr.diff \
+            --proposal /tmp/proposal.md \
+            --state /tmp/state.json \
+            --repo-root . > /tmp/report.md
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+          cat /tmp/report.md
+
+      - name: Comment the report on the pull request
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} \
+            --body-file /tmp/report.md
+
+      - name: Record the report for the decision log
+        if: always()
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          pnpm policy:check \
+            --diff /tmp/pr.diff \
+            --proposal /tmp/proposal.md \
+            --state /tmp/state.json \
+            --repo-root . \
+            --format json > /tmp/report.json || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: policy-report
+          path: |
+            /tmp/report.md
+            /tmp/report.json
+
+      # Last, so the report is always commented even on failure.
+      - name: Block the merge if any check failed
+        if: steps.policy.outputs.exit_code != '0'
+        run: |
+          echo "::error::Policy Engine rejected this proposal. See the PR comment."
+          exit 1

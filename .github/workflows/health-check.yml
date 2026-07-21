@@ -1,0 +1,58 @@
+name: Health check (Operator)
+
+# The Operator's nightly health check (plan §6.4): ingest freshness, connector
+# failures, agent error rates, spend against budget, backup verification, index
+# coverage. Findings raise investigation jobs; severe findings set freeze.
+#
+# Runs after ingest so it evaluates the day's data rather than yesterday's.
+
+on:
+  schedule:
+    - cron: '40 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  health:
+    name: Operator health check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Enqueue and run the health check
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          ATLAS_LLM_MONTHLY_BUDGET_USD: ${{ vars.ATLAS_LLM_MONTHLY_BUDGET_USD }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          pnpm queue:enqueue --role operator --kind health-check
+          pnpm --filter @atlas/agents worker --role operator
+
+      - name: Open an issue on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue create \
+            --title "Operator health check failed: $(date -u +%Y-%m-%d)" \
+            --label operator-failure \
+            --body "The nightly health check did not complete. The system may be unmonitored — check whether it is frozen and why.
+
+          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

@@ -1,0 +1,64 @@
+name: Lighthouse (technical metrics)
+
+# Scheduled Lighthouse run over a sample of page types for lab data (plan §4.2).
+# Field CWV comes from Vercel Speed Insights via the technical connector; this
+# is the lab half. Weekly rather than daily: lab scores on a static site move
+# slowly, and a daily run mostly measures runner noise.
+
+on:
+  schedule:
+    - cron: '15 4 * * 1'
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'Single URL to audit (blank audits the standard sample)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  lighthouse:
+    name: Audit a sample of page types
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Install Lighthouse
+        run: pnpm add -g lighthouse@12
+
+      - name: Run the technical connector
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SITE_BASE_URL: ${{ secrets.SITE_BASE_URL }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
+        run: |
+          pnpm ingest:run --connector technical \
+            ${{ inputs.url && format('--url {0}', inputs.url) || '' }}
+
+      - name: Open an issue on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue create \
+            --title "Lighthouse run failed: $(date -u +%Y-%m-%d)" \
+            --label ingest-failure \
+            --body "The weekly Lighthouse sample failed; technical_metrics has a gap for this week.
+
+          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

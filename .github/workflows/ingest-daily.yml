@@ -1,0 +1,76 @@
+name: Ingest (daily)
+
+# One scheduled run per connector, staggered (plan §4.3). Every run writes to
+# ingest_runs with status and row counts — a connector that silently stops is
+# worse than one that never existed, because the gap gets trusted as a signal.
+
+on:
+  schedule:
+    # 05:20 UTC — after Search Console's 2–3 day lag window has settled for the
+    # dates being pulled, and outside the nightly PostHog aggregation.
+    - cron: '20 5 * * *'
+  workflow_dispatch:
+    inputs:
+      connector:
+        description: 'Single connector to run (blank runs all)'
+        required: false
+        type: string
+      backfill:
+        description: 'Backfill mode — pulls the full available history'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  ingest:
+    name: Run connectors
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Run ingest
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GSC_CLIENT_EMAIL: ${{ secrets.GSC_CLIENT_EMAIL }}
+          GSC_PRIVATE_KEY: ${{ secrets.GSC_PRIVATE_KEY }}
+          GSC_SITE_URL: ${{ secrets.GSC_SITE_URL }}
+          POSTHOG_HOST: ${{ secrets.POSTHOG_HOST }}
+          POSTHOG_PROJECT_ID: ${{ secrets.POSTHOG_PROJECT_ID }}
+          POSTHOG_PERSONAL_API_KEY: ${{ secrets.POSTHOG_PERSONAL_API_KEY }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
+          SITE_BASE_URL: ${{ secrets.SITE_BASE_URL }}
+        run: |
+          pnpm ingest:run \
+            ${{ inputs.connector && format('--connector {0}', inputs.connector) || '' }} \
+            ${{ inputs.backfill && '--backfill' || '' }}
+
+      - name: Open an issue on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue create \
+            --title "Ingest failed: $(date -u +%Y-%m-%d)" \
+            --label ingest-failure \
+            --body "The daily ingest run failed. A gap in the data is not a zero — do not read the missing days as a real decline.
+
+          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          Check \`ingest_runs\` for which connector failed and re-run this workflow with that connector once the cause is fixed."

@@ -1,0 +1,89 @@
+name: Agent worker
+
+# Drains the job queue (plan §6.1). The worker exits when the queue is empty
+# rather than running forever, so a stuck worker cannot outlive its schedule.
+#
+# The worker respects freeze state per tenant, read from the database — nothing
+# in a job payload can influence it. While frozen, only Operator jobs run, so
+# the system can still observe its way back out. Only a human unfreezes.
+
+on:
+  schedule:
+    # Four times a day. At the volume this system operates at — dozens of jobs
+    # a day, not thousands a second — this is ample, and it keeps agent activity
+    # in predictable windows that are easy to review.
+    - cron: '0 7,11,15,19 * * *'
+  workflow_dispatch:
+    inputs:
+      role:
+        description: 'Single role to drain (blank drains all five)'
+        required: false
+        type: choice
+        default: ''
+        options:
+          - ''
+          - builder
+          - operator
+          - analyst
+          - scout
+          - strategist
+      batch:
+        description: 'Max jobs claimed per role per pass'
+        required: false
+        type: string
+        default: '5'
+
+# The worker opens pull requests; it never pushes to main.
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  # One worker at a time. SKIP LOCKED makes concurrent workers safe, but a
+  # single worker keeps cost and PR volume legible while this is young.
+  group: agent-worker
+  cancel-in-progress: false
+
+jobs:
+  worker:
+    name: Drain the job queue
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Drain
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ATLAS_LLM_MONTHLY_BUDGET_USD: ${{ vars.ATLAS_LLM_MONTHLY_BUDGET_USD }}
+          GITHUB_TOKEN: ${{ secrets.ATLAS_PR_TOKEN || secrets.GITHUB_TOKEN }}
+          GITHUB_REPO: ${{ github.repository }}
+          SITE_BASE_URL: ${{ secrets.SITE_BASE_URL }}
+        run: |
+          pnpm --filter @atlas/agents worker \
+            ${{ inputs.role && format('--role {0}', inputs.role) || '' }} \
+            --batch ${{ inputs.batch || '5' }}
+
+      - name: Open an issue on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue create \
+            --title "Agent worker failed: $(date -u +%Y-%m-%dT%H:%M)" \
+            --label agent-failure \
+            --body "The worker exited non-zero. Failed jobs stay in the queue with backoff and are visible in \`jobs\` with status 'failed' or 'dead'.
+
+          Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

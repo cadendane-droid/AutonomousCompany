@@ -12,7 +12,7 @@
     "test": "pnpm -r test",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "typecheck": "pnpm -r typecheck",
+    "typecheck": "tsc -p tsconfig.json && pnpm -r typecheck",
     "db:migrate": "pnpm --filter @atlas/db migrate",
     "db:seed": "tsx scripts/db-seed.ts",
     "tenant:create": "tsx scripts/tenant-create.ts",
@@ -21,7 +21,15 @@
     "decisions:log": "tsx scripts/decisions-log.ts",
     "queue:enqueue": "tsx scripts/queue-enqueue.ts",
     "events:add": "tsx scripts/events-add.ts",
+    "ingest:run": "pnpm --filter @atlas/ingest run",
     "policy:check": "tsx policy/src/cli.ts"
+  },
+  "dependencies": {
+    "@atlas/core": "workspace:*",
+    "@atlas/db": "workspace:*",
+    "@atlas/llm": "workspace:*",
+    "yaml": "^2.5.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
