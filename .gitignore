@@ -1,0 +1,24 @@
+# deps
+node_modules/
+.pnpm-store/
+
+# builds
+dist/
+.astro/
+site/dist/
+
+# env — never commit secrets
+.env
+.env.*
+!.env.example
+
+# logs & OS
+*.log
+.DS_Store
+
+# test
+coverage/
+
+# editor
+.idea/
+.vscode/
