@@ -1,0 +1,19 @@
+{
+  "name": "@atlas/agents",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/worker.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && cp -R src/prompts dist/prompts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "worker": "tsx src/worker.ts"
+  },
+  "dependencies": {
+    "@atlas/core": "workspace:*",
+    "@atlas/db": "workspace:*",
+    "@atlas/llm": "workspace:*",
+    "zod": "^3.23.8"
+  }
+}
