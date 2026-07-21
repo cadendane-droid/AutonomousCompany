@@ -1,3 +1,4 @@
+// Barrel. Every module below is TIER B — SQL untested against a live Postgres.
 export * from './client.js';
 export * from './migrate.js';
 export * from './queue.js';

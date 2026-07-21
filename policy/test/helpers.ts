@@ -1,3 +1,4 @@
+// TIER A: test helpers. Pure fixtures over the local filesystem.
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadRules } from '../src/config.js';

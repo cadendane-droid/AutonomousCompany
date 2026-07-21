@@ -1,3 +1,4 @@
+// TIER A: pure constants. Single source of truth for placeholder values.
 /**
  * Single-source-of-truth placeholders. Grep for TODO(setup) to find every
  * value a human must replace before launch.

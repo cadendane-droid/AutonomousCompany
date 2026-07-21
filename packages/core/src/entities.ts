@@ -1,3 +1,4 @@
+// TIER A: pure Zod schemas and types. No external dependencies.
 import { z } from 'zod';
 import {
   DecisionKindSchema,

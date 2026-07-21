@@ -1,3 +1,4 @@
+// TIER A: pure connector interface types. No external dependencies.
 export interface DateRange {
   /** Inclusive, yyyy-mm-dd. */
   from: string;

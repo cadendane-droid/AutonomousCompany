@@ -1,3 +1,4 @@
+// TIER A: pure Zod schema for content frontmatter (plan §3.1).
 import { z } from 'zod';
 import { PageTypeSchema } from './enums.js';
 

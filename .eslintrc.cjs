@@ -7,7 +7,11 @@ module.exports = {
   env: { node: true, es2022: true },
   ignorePatterns: ['dist/', 'node_modules/', '.astro/', '*.astro', 'coverage/'],
   rules: {
-    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    // ignoreRestSiblings covers destructure-to-omit: `const { x: _x, ...rest } = o`
+    '@typescript-eslint/no-unused-vars': [
+      'error',
+      { argsIgnorePattern: '^_', varsIgnorePattern: '^_', ignoreRestSiblings: true },
+    ],
     '@typescript-eslint/consistent-type-imports': 'error',
   },
 };

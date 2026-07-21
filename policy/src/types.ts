@@ -1,3 +1,4 @@
+// TIER A: pure types and Zod schemas for the check protocol.
 import { z } from 'zod';
 import { RungSchema, type Proposal } from '@atlas/core';
 import type { PolicyRules } from './config.js';

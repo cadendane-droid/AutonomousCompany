@@ -1,3 +1,4 @@
+// TIER A: pure handler protocol types. No external dependencies.
 import type { Job, Tenant } from '@atlas/core';
 
 export interface JobContext {

@@ -1,3 +1,4 @@
+// Barrel. Every module below is TIER A — pure, unit tested.
 export * from './normal.js';
 export * from './power.js';
 export * from './did.js';

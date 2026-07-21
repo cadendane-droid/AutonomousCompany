@@ -1,3 +1,4 @@
+// TIER A: pure Zod schema for the structured proposal body (plan §6.3).
 import { z } from 'zod';
 import { ExperimentMethodSchema, RiskTierSchema } from './enums.js';
 

@@ -1,3 +1,4 @@
+// TIER A: pure orchestration over local files. No external services.
 // CLI: pnpm policy:check --diff <file> --proposal <file> [--state <file>]
 //   [--repo-root <dir>] [--format md|json] [--deterministic-only]
 //

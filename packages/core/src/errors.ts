@@ -1,3 +1,4 @@
+// TIER A: pure error types. No external dependencies.
 /**
  * Thrown by Tier C modules — interface-only code whose shape can't be known
  * yet. Every throw site documents what unblocks it.

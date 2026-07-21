@@ -1,3 +1,4 @@
+// TIER A: env access helpers. Pure, no external dependencies.
 /**
  * Env access with loud failure. Never read process.env directly elsewhere —
  * a missing secret must fail naming the variable, not surface as `undefined`

@@ -1,3 +1,4 @@
+// TIER A: barrel. Re-exports only; every module below is Tier A.
 export * from './enums.js';
 export * from './rungs.js';
 export * from './constants.js';

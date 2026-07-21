@@ -1,3 +1,4 @@
+// TIER B: runs real DDL against DATABASE_URL; untested against a live Postgres.
 // CLI entry: pnpm db:migrate — applies db/migrations against DATABASE_URL.
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';

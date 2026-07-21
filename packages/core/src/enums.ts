@@ -1,3 +1,4 @@
+// TIER A: pure enums and Zod schemas. No external dependencies.
 import { z } from 'zod';
 
 /** Maturity ladder position (spec §4). Stored on tenants.rung. */

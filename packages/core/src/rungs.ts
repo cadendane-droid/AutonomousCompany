@@ -1,3 +1,4 @@
+// TIER A: the maturity ladder as data. Pure, no external dependencies.
 import type { ExperimentMethod, KnowledgeTier, Rung } from './enums.js';
 
 /**
