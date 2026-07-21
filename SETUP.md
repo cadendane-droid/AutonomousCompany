@@ -7,6 +7,10 @@ Steps 1–2 need nothing but Node. Everything after needs accounts. **Step 0 is
 not optional and is not a technical step** — most of what follows depends on
 decisions that have not been made yet.
 
+**If you do not yet have the accounts and credentials this assumes, start with
+[PROCUREMENT.md](PROCUREMENT.md)** — it covers what to acquire, what it costs,
+what to decide, and in what order. This document covers wiring it together.
+
 ---
 
 ## Step 0 — Decide the things the code cannot decide

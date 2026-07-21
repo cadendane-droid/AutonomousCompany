@@ -72,8 +72,9 @@ pnpm typecheck
 
 That much works from a clean checkout with no credentials and no database.
 
-To go further you need a Postgres URL and API keys — follow
-[SETUP.md](SETUP.md), which is an ordered checklist from clone to running.
+To go further you need a Postgres URL and API keys.
+[PROCUREMENT.md](PROCUREMENT.md) lists what to acquire, what it costs, and in
+what order; [SETUP.md](SETUP.md) is the ordered checklist from clone to running.
 
 Try the Policy Engine locally without any credentials:
 
