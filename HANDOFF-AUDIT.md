@@ -1,57 +1,102 @@
 # Handoff Audit
 
 A previous session scaffolded this repo and stopped mid-build when it ran out of
-credits. This file records the state it was found in, verified mechanically
-rather than by inspection. It is disposable once the scaffold is complete.
+credits. This file recorded the state it was found in and now records what
+remains.
 
-**Audited:** 2026-07-21, at commit `af19fea`.
+**Original audit:** 2026-07-21 at commit `af19fea`.
+**Updated:** 2026-07-21, after completing the scaffold.
 
-## Mechanical baseline (run before any changes)
+**This file is still here because the scaffold is not 100% done by its own
+done-conditions.** Two of them require a live Postgres and a deployed site,
+neither of which existed in this environment. Everything else is complete. See
+"What remains" at the bottom — when those two are ticked, delete this file.
 
-| Command | Result |
-|---|---|
-| `pnpm install` | passes — 8 workspace projects resolved |
-| `pnpm typecheck` | passes — 7 of 8 projects (`site` does not exist) |
-| `pnpm test` | passes — 92 tests across core, stats, llm, policy |
-| `pnpm build` | passes — exit 0 |
-| `pnpm lint` | **fails** — 1 error, unused `_atlas` in `packages/core/src/rungs.test.ts:55` |
+## State it was found in
 
-No file was found truncated mid-write. Every `.ts` file parses and ends at a
-clean statement boundary. The interruption landed cleanly between build items,
-not inside one — the repo compiles as found.
+The repo compiled as found — no file was truncated mid-write, and the
+interruption landed cleanly between build items rather than inside one. What was
+missing was missing entirely: `site/`, `scripts/`, `.github/`, all top-level
+documentation, and the worker plus four of the five agent roles.
 
-## Build item status
+| Command | As found | Now |
+|---|---|---|
+| `pnpm install` | passes | passes |
+| `pnpm build` | passes | passes |
+| `pnpm typecheck` | passes | passes |
+| `pnpm test` | passes — 92 tests | passes — **126 tests** |
+| `pnpm lint` | **fails** — 1 error | passes |
 
-| # | Item | Status | Evidence | What remains |
+## Build items — final status
+
+| # | Item | As found | Now | What changed |
 |---|---|---|---|---|
-| 1 | Repo foundation | **PARTIAL** | install/typecheck/test/build pass; `pnpm lint` fails on one unused var; `pnpm-workspace.yaml` lists `site`, which does not exist | Fix lint error; `site` resolves once item 10 lands |
-| 2 | `packages/core` | **COMPLETE** | All 9 entity schemas, frontmatter matching plan §3.1 incl. nested `atlas` block, 7 enums, `RUNG_DEFINITIONS` as a data table keyed by rung with thresholds/methods/concurrency/promotable tiers | Add Tier markers (ground rule 3 applies to every module; core files carry none) |
-| 3 | `db/migrations` | **COMPLETE** | 0001–0013 all present. Spot-checked 0002 and 0007 against plan §4.1/§7.3 — transcribed exactly. `decisions.rollback_ref` is `not null` (Law 2), `decisions.measurable` is `not null` with no default (Law 9). Every table carries `tenant_id`. Each migration documents its manual reversal | — |
-| 4 | `packages/db` | **COMPLETE** | Typed client, migration runner with `schema_migrations`, query modules per domain, `SKIP LOCKED` queue with enqueue/claim/complete/fail/heartbeat. Tier B marked throughout | — |
-| 5 | `packages/stats` | **COMPLETE** | 40 passing tests across power, did, anomaly, health-score, cohorts. Tier A marked | Verify the spec §4 effect-size table is asserted as a fixture |
-| 6 | `policy/` | **PARTIAL** | 11 checks implemented and wired into `ALL_CHECKS`; fail-closed runner confirmed (a throwing check records `fail`); no override reachable from PR content; `rules.yml` transcribes plan §5.2 in full; 41 tests | **2 of the 13 checks in plan §5.3 are missing:** Lighthouse-on-preview regression, and brand-voice conformance |
-| 7 | `packages/llm` | **COMPLETE** | Tiered router with task→tier config table, budget cap with degradation and hard stop, structured-output helper, single `models.ts` config. 11 tests | Model ids are current as of the cutoff; flag for verification |
-| 8 | `ingest/` | **COMPLETE** | All 5 connectors + `runner.ts` with retry/backoff and staleness assertion. Tier B marked | — |
-| 9 | `agents/` | **PARTIAL** | Present: `context.ts` (incl. pgvector semantic recall), `queue.ts`, `prompts.ts`, `proposals/`, `roles/builder/` with the six-step pipeline, and all 5 system prompts. **Missing: `worker.ts`** — the runtime entry point — and the `operator/`, `analyst/`, `scout/`, `strategist/` role directories | Build worker loop, operator substantively, other three as Tier C |
-| 10 | `site/` | **MISSING** | Directory does not exist, despite being listed in `pnpm-workspace.yaml` | Entire Astro site |
-| 11 | `.github/workflows/` | **MISSING** | Directory does not exist | All 6 workflows |
-| 12 | `scripts/` | **MISSING** | Directory does not exist, but root `package.json` already references 8 scripts in it — every one of those pnpm scripts is currently broken | All 8 scripts |
-| 13 | Documentation | **MISSING** | No `README.md`, `SETUP.md`, `docs/architecture.md`, `docs/runbook.md`, or `docs/adr/` | All of it |
-| — | `OPEN-QUESTIONS.md` | **MISSING** | Never started — so no prior Section 2 reasoning survives to merge with | Write in full |
+| 1 | Repo foundation | PARTIAL | **COMPLETE** | Fixed the lint failure; added a root `tsconfig.json` so `scripts/` is typechecked; added the root runtime deps the scripts needed. |
+| 2 | `packages/core` | COMPLETE | COMPLETE | Added Tier markers only. Not otherwise touched. |
+| 3 | `db/migrations` | COMPLETE | COMPLETE | Untouched. Verified faithful to plan §4.1/§7.3. |
+| 4 | `packages/db` | COMPLETE | COMPLETE | Untouched. |
+| 5 | `packages/stats` | COMPLETE | COMPLETE | Untouched. 40 tests. |
+| 6 | `policy/` | PARTIAL | **COMPLETE** | Added the missing Lighthouse regression check + 7 tests. Brand-voice turned out to be implemented inside `quality-threshold.ts` — kept as-is, noted in OPEN-QUESTIONS §2.3. |
+| 7 | `packages/llm` | COMPLETE | COMPLETE | Untouched. |
+| 8 | `ingest/` | COMPLETE | COMPLETE | Untouched. |
+| 9 | `agents/` | PARTIAL | **COMPLETE¹** | Built `worker.ts`, the role registry, the Operator role substantively, and Analyst/Scout/Strategist as Tier C. 7 worker tests. |
+| 10 | `site/` | MISSING | **COMPLETE²** | Full Astro site: collections, 3 layouts, 4 components, JSON-LD, sitemap, robots, 3 template articles. 11 schema tests. |
+| 11 | `.github/workflows/` | MISSING | **COMPLETE** | All 6 workflows. |
+| 12 | `scripts/` | MISSING | **COMPLETE** | All 8 declared scripts (every one was previously broken) plus `policy-state.ts`. |
+| 13 | Documentation | MISSING | **COMPLETE** | README, SETUP, architecture, runbook, 5 ADRs. |
+| — | `OPEN-QUESTIONS.md` | MISSING | **COMPLETE** | All four sections. Nothing to merge — the previous session never started it. |
 
-## Notes carried into the repair work
+¹ ² See "What remains".
 
-- **No secrets found.** `.env.example` contains only placeholders. Every env
-  read goes through `requireEnv`/`optionalEnv`; the 15 variables read in code
-  are all declared in `.env.example`. Nothing to rotate.
-- **`dist/` is correctly gitignored** and untracked, despite being present on
-  disk from the prior session's builds.
-- **The prior session's work is good.** Rung logic is genuinely a data
-  structure the Policy Engine reads rather than scattered conditionals; the
-  fail-closed runner is correct; migrations are faithful transcriptions. Per
-  the handoff instructions, none of it is being rewritten.
-- **Spec filenames differ from both prompts.** The specs are at
-  `docs/atlas-os-master-spec-v2.md` and `docs/atlas-os-implementation-plan.md`;
-  the build prompt is at `docs/claude-code-scaffold-prompt.md`, not
-  `docs/build-prompt.md`. No action needed, but references should use the real
-  names.
+## Defects found and fixed along the way
+
+- **`pnpm lint` failed on a clean checkout** — `no-unused-vars` rejected the
+  previous session's destructure-to-omit in `rungs.test.ts`. Fixed the ESLint
+  config rather than the test, preserving the test's intent.
+- **Unroutable jobs were parked, not failed.** The worker's "no handler" throw
+  sat outside its try block, so `fail()` never ran and the job stayed `running`
+  until the reaper found it. Caught by a test written for exactly that case.
+- **Every one of the 8 `pnpm` scripts declared in `package.json` was broken** —
+  the files did not exist and the root package had no dependencies to resolve.
+- **`scripts/` was silently untypechecked.** `pnpm -r typecheck` only visits
+  workspace packages.
+- **CI ran typecheck and test before build**, which fails on a clean runner
+  because workspace packages resolve through their built `dist/` declarations.
+  Reordered `ci.yml` and added a build step to the five workflows that run code.
+- **`@astrojs/sitemap` floated to 3.7.3**, which crashes against Astro 4. Pinned.
+
+## No secrets
+
+`.env.example` contains only placeholders. All 16 env vars read in code are
+declared there, and every read goes through `requireEnv`/`optionalEnv`. A scan
+for key patterns (`sk-ant-`, `phc_`, `phx_`, `ghp_`, `github_pat_`, PEM blocks)
+across all source, config, and docs returns nothing. `.env` is gitignored and
+untracked. **Nothing needs rotating.**
+
+## What remains
+
+Two done-conditions could not be met in this environment. Both need
+infrastructure, not code.
+
+1. **Item 9 — "worker loop demonstrably processes a seeded job end to end
+   against a local Postgres."** No Postgres was available. The loop has 7 unit
+   tests with the data layer mocked, covering freeze behavior, unroutable jobs,
+   handler failure, and unknown tenants. The end-to-end run is SETUP.md step 10:
+
+   ```bash
+   pnpm db:migrate && pnpm db:seed
+   pnpm queue:enqueue --role operator --kind health-check
+   pnpm --filter @atlas/agents worker --role operator
+   ```
+
+2. **Item 10 — Lighthouse 95+ mobile (plan §3.2).** The site builds to 8 static
+   pages with valid JSON-LD and correct heading hierarchy, which satisfies the
+   prompt's stated done-condition (`pnpm --filter site build` succeeds). It has
+   not been *measured*, because that needs a deployed URL. SETUP.md steps 5 and
+   11.
+
+Beyond those, everything Tier B in the repo is unverified against live services
+by definition — that is what Tier B means, and it is inventoried in
+[OPEN-QUESTIONS.md §3](OPEN-QUESTIONS.md), not here.
+
+**Delete this file once both items above are ticked.**

@@ -33,6 +33,9 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # Workspace packages resolve through their built dist/ output.
+      - run: pnpm build
+
       - name: Enqueue and run the health check
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

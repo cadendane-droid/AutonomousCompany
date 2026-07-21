@@ -45,6 +45,9 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # Workspace packages resolve through their built dist/ output.
+      - run: pnpm build
+
       - name: Extract the diff
         run: |
           git fetch --no-tags origin ${{ github.event.pull_request.base.sha }}

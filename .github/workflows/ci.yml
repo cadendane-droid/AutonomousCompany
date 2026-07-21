@@ -27,10 +27,13 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # Build first. Workspace packages resolve through their built dist/
+      # declarations, so typecheck and test cannot run before it on a clean
+      # checkout.
+      - run: pnpm build
+
       - run: pnpm lint
 
       - run: pnpm typecheck
 
       - run: pnpm test
-
-      - run: pnpm build
